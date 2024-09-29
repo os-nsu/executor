@@ -52,3 +52,59 @@ print(f'done')
 
 print(f'environment {env_name} created')
 print('Use env-process-attach.py for attach process to cgroup')
+
+import argparse
+from cgroup import CGroup
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--env_name', type = str, required = True, help = 'environment name')
+parser.add_argument('--cpu', type = int, required = True, help = 'CPU core number')
+parser.add_argument('--memory', type = int, required = True, help = 'RAM size (MB)')
+parser.add_argument('--disk_name', type = str, required = True, help = 'Disk name (example, nvme0n1)')
+parser.add_argument('--disk_speed', type = str, required = True, help = 'Disk speed (MB/sec)')
+parser.add_argument('--network', type = int, required = True, help = 'Nerwork speed (example, 10MB/s)')
+
+args = parser.parse_args()
+
+print('environment creator start...')
+
+if not CGroup.check_controllers():
+    print('cgroup controllers check failed')
+    exit(-1)
+
+cgroup = CGroup(args.env_name)
+
+print(f'creating cgroup {args.env_name}... ')
+
+if cgroup.created():
+    print(f'cannot create cgroup {args.env_name}. Cgroup is exists')
+    exit(-1)
+
+if not cgroup.create():
+    print(f'cgroup {args.env_name} create failed')
+    exit(-1)
+
+print(f'done')
+
+print('Required:')
+print(f'CPU: {args.cpu} cores')
+print(f'Memory: {args.memory} MB')
+print(f'Disk name: {args.disk_name}')
+print(f'Disk speed: {args.disk_speed} MB/sec')
+print(f'Network Speed: {args.network}')
+
+print(f'adding memory usage limit... ')
+cgroup.set_memory_usage_limit(args.memory)
+print(f'done')
+
+print(f'adding CPU core usage count... ')
+cgroup.set_cpu_core_count_limit(args.cpu)
+print(f'done')
+
+print(f'adding disk RW speed limit... ')
+cgroup.set_disk_rw_speed_limit(args.disk_name, args.disk_speed)
+print(f'done')
+
+print(f'environment {args.env_name} created')
+print('Use env-process-attach.py for attach process to cgroup')
