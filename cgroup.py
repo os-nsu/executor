@@ -97,29 +97,13 @@ class CGroup:
     def get_io_stat(self):
         io_stat_path = os.path.join(f'/sys/fs/cgroup/{self.name}', 'io.stat')
         io_pressure_path = os.path.join(f'/sys/fs/cgroup/{self.name}', 'io.pressure')
-        io_max_path = os.path.join(f'/sys/fs/cgroup/{self.name}', 'io.max')
 
         if not os.path.exists(io_stat_path):
             print(f"No I/O statistics available for {self.name}")
             return
-        
-        if not os.path.exists(io_max_path):
-            print(f"No I/O max limits set for cgroup {self.name}")
-            return
 
         io_stats = {}
         io_pressure = {}
-        io_max = {}
-                
-        with open(io_max_path, 'r') as f:
-            for line in f:
-                parts = line.strip().split()
-                device = parts[0]
-                io_max[device] = {}
-                for limit in parts[1:]:
-                    key, value = limit.split('=')
-                    io_max[device][key] = value
-            
 
         with open(io_stat_path, 'r') as f:
             for line in f:
@@ -150,7 +134,7 @@ class CGroup:
                             'total': full_data[4].split('=')[1],
                         }
         
-        return io_stats, io_pressure, io_max
+        return io_stats, io_pressure
 
     def get_network_usage(self) -> dict:
         network_usage = {}

@@ -26,13 +26,7 @@ def display_data(screen):
         if args.memory:
             usage_string.append(f"Memory usage: \n{cgroup.get_memory_usage()}\n")
         if args.disk:
-            io_stats, io_pressure, io_max = cgroup.get_io_stat()
-
-            usage_string.append(f"I/O max limits for cgroup {cgroup.name}:\n")
-            for device, limits in io_max.items():
-                usage_string.append(f"Device: {device}\n")
-                usage_string.append(f"  Read bandwidth limit (rbps): {limits.get('rbps', 'No limit')}\n")
-                usage_string.append(f"  Write bandwidth limit (wbps): {limits.get('wbps', 'No limit')}\n")
+            io_stats, io_pressure = cgroup.get_io_stat()
 
             usage_string.append(f"I/O statistics for cgroup {cgroup.name}:\n")
             for device, stats in io_stats.items():
