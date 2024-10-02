@@ -84,15 +84,19 @@ class CGroup:
         return usage_usec, user_usec, system_usec
 
 
-    def get_memory_usage(self) -> int:
+    def get_memory_usage(self):
+        memory_current = 0
+        memory_max = 0
         try:
             with open(f'/sys/fs/cgroup/{self.name}/memory.current', 'r') as f:
-                return int(f.read().strip())
+                memory_current = int(f.read().strip())
+            with open(f'/sys/fs/cgroup/{self.name}/memory.max', 'r') as f:
+                memory_max = int(f.read().strip())
         except FileNotFoundError:
             print(f"Memory usage file not found for cgroup {self.name}")
         except Exception as e:
             print(f"Error reading memory usage: {e}")
-            return 0
+        return memory_current, memory_max
 
     def get_io_stat(self):
         io_stat_path = os.path.join(f'/sys/fs/cgroup/{self.name}', 'io.stat')
