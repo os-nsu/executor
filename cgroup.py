@@ -64,90 +64,25 @@ class CGroup:
         with open(f"/sys/fs/cgroup/{self.name}/memory.max", 'a+') as f:
             f.write(str(limit) + 'M')
 
-    # выводит потребление cpu каждым ядром
-    def __read_proc_stat_per_core(self):
-        cpu_times = {}
-        with open('/proc/stat', 'r') as f:
-            for line in f:
-                if line.startswith('cpu'):
-                    parts = line.split()
-                    if parts[0] == 'cpu':
-                        continue
-                    core_id = parts[0]
-                    values = list(map(int, parts[1:]))
-                    active_time = sum(values)
-                    cpu_times[core_id] = active_time
-        return cpu_times
 
-    # выводит общее потребление cpu
-    def __read_proc_stat(self):
-        with open('/proc/stat', 'r') as f:
-            for line in f:
-                parts = line.split()
-                values = list(map(int, parts[1:]))
-                total_time = sum(values)
-                return total_time
-
-    # выводит потребление cpu данной cgroup
-    def __read_cpu_stat(self):
-        usage_usec = 0
+    # выводит потребление cpu данной cgroup в виде времени использования процессора (в микросекундах)
+    def get_cpu_usage(self):
+        usage_usec = 0   # user_usec + system_usec
+        user_usec = 0    # число микросекунд, потраченных на пользовательские задачи
+        system_usec = 0  # число микросекунд, потраченных на системные задачи
         try:
             with open(f'/sys/fs/cgroup/{self.name}/cpu.stat', 'r') as f:
                 for line in f:
-                    # в usage_usec лежит число микросекунд, потраченных на пользовательские и системные задачи
                     if line.startswith('usage_usec'):
                         usage_usec = int(line.split()[1])
-                        break
+                    if line.startswith('user_usec'):
+                        user_usec = int(line.split()[1])
+                    if line.startswith('system_usec'):
+                        system_usec = int(line.split()[1])    
         except FileNotFoundError:
             print(f"File cpu.stat not found for cgroup {self.name}")
-        return usage_usec
+        return usage_usec, user_usec, system_usec
 
-    # выводит потребление cpu в процентном соотношении
-    def get_total_cpu_usage(self):
-        clk_tck = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
-        # рассчитываем сколько микросекунд в одном тике (в /proc/stat время указано в тиках процессора)
-        tick_in_microseconds = 1_000_000 / clk_tck # clk_tck - количество тиков в секунде
-
-        cgroup_usage_before = self.__read_cpu_stat()
-        cpu_times_before = self.__read_proc_stat()
-
-        time.sleep(1)
-
-        cgroup_usage_after = self.__read_cpu_stat()
-        cpu_times_after = self.__read_proc_stat()
-
-        cgroup_usage_diff = cgroup_usage_after - cgroup_usage_before
-        cpu_times_diff = cpu_times_after - cpu_times_before
-
-        cpu_percentage = (cgroup_usage_diff / (cpu_times_diff * tick_in_microseconds)) * 100
-        return cpu_percentage
-
-    # TODO: нужно найти способ получать статистику на каждое ядро (пока работает некорректно)
-    def get_cpu_usage_per_core(self):
-        clk_tck = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
-        # Рассчитываем сколько микросекунд в одном тике
-        tick_in_microseconds = 1_000_000 / clk_tck
-
-        cgroup_usage_before = self.__read_cpu_stat()
-        cpu_times_before = self.__read_proc_stat_per_core()
-
-        time.sleep(1)
-
-        cgroup_usage_after = self.__read_cpu_stat()
-        cpu_times_after = self.__read_proc_stat_per_core()
-
-        cgroup_usage_diff = cgroup_usage_after - cgroup_usage_before
-
-        cpu_percentages = {}
-        for core, (active_before, idle_before) in cpu_times_before.items():
-            active_after, idle_after = cpu_times_after[core]
-            active_diff = active_after - active_before
-            total_diff = active_diff + (idle_after - idle_before)
-
-            if total_diff > 0:
-                cpu_percentage = (cgroup_usage_diff / (total_diff * tick_in_microseconds)) * 100
-                cpu_percentages[core] = cpu_percentage
-        return cpu_percentages
 
     def get_memory_usage(self) -> int:
         try:
