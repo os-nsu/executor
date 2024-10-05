@@ -7,11 +7,11 @@ class CgroupStats:
 
     # выводит потребление cpu данной cgroup в виде времени использования процессора (в микросекундах)
     def get_cpu_usage(self):
-        usage_usec = 0  # user_usec + system_usec
-        user_usec = 0  # число микросекунд, потраченных на пользовательские задачи
-        system_usec = 0  # число микросекунд, потраченных на системные задачи
         try:
             with open(f'/sys/fs/cgroup/{self.name}/cpu.stat', 'r') as f:
+                usage_usec = 0  # user_usec + system_usec
+                user_usec = 0  # число микросекунд, потраченных на пользовательские задачи
+                system_usec = 0  # число микросекунд, потраченных на системные задачи
                 for line in f:
                     if line.startswith('usage_usec'):
                         usage_usec = int(line.split()[1])
@@ -19,46 +19,48 @@ class CgroupStats:
                         user_usec = int(line.split()[1])
                     if line.startswith('system_usec'):
                         system_usec = int(line.split()[1])
+                return usage_usec, user_usec, system_usec
         except FileNotFoundError:
             print(f"File cpu.stat not found for cgroup {self.name}")
-        return usage_usec, user_usec, system_usec
+            return None
 
     def get_memory_usage(self):
-        memory_current = 0
-        memory_max = 0
         try:
             with open(f'/sys/fs/cgroup/{self.name}/memory.current', 'r') as f:
                 memory_current = int(f.read().strip())
             with open(f'/sys/fs/cgroup/{self.name}/memory.max', 'r') as f:
                 memory_max = int(f.read().strip())
+            return memory_current, memory_max
         except FileNotFoundError:
             print(f"Memory usage file not found for cgroup {self.name}")
+            return None
         except Exception as e:
             print(f"Error reading memory usage: {e}")
-        return memory_current, memory_max
+            return None
 
     def get_io_stat(self):
-        io_stat_path = os.path.join(f'/sys/fs/cgroup/{self.name}', 'io.stat')
-        io_pressure_path = os.path.join(f'/sys/fs/cgroup/{self.name}', 'io.pressure')
+        try:
+            with open(f'/sys/fs/cgroup/{self.name}/io.stat', 'r') as f:
+                io_stats = {}
+                for line in f:
+                    parts = line.split()
+                    device = parts[0]
+                    io_stats[device] = {}
+                    for stat in parts[1:]:
+                        key, value = stat.split('=')
+                        io_stats[device][key] = int(value)
+                return io_stats
+        except FileNotFoundError:
+            print(f"IO stats file not found for cgroup {self.name}")
+            return None
+        except Exception as e:
+            print(f"Error reading IO stats: {e}")
+            return None
 
-        if not os.path.exists(io_stat_path):
-            print(f"No I/O statistics available for {self.name}")
-            return
-
-        io_stats = {}
-        io_pressure = {}
-
-        with open(io_stat_path, 'r') as f:
-            for line in f:
-                parts = line.split()
-                device = parts[0]
-                io_stats[device] = {}
-                for stat in parts[1:]:
-                    key, value = stat.split('=')
-                    io_stats[device][key] = int(value)
-
-        if os.path.exists(io_pressure_path):
-            with open(io_pressure_path, 'r') as f:
+    def get_io_pressure(self):
+        try:
+            with open(f'/sys/fs/cgroup/{self.name}/io.pressure', 'r') as f:
+                io_pressure = {}
                 for line in f:
                     if line.startswith("some"):
                         some_data = line.split()
@@ -76,8 +78,13 @@ class CgroupStats:
                             'avg300': full_data[3].split('=')[1],
                             'total': full_data[4].split('=')[1],
                         }
-
-        return io_stats, io_pressure
+                return io_pressure
+        except FileNotFoundError:
+            print(f"IO pressure file not found for cgroup {self.name}")
+            return None
+        except Exception as e:
+            print(f"Error reading IO pressure: {e}")
+            return None
 
     def get_network_usage(self) -> dict:
         network_usage = {}

@@ -15,22 +15,21 @@ def main():
 
     args = parser.parse_args()
 
-    cgroup = CgroupStats(args.env_name)
+    cgroup_stats = CgroupStats(args.env_name)
 
     def display_data(screen):
         curses.curs_set(0)
         while True:
             usage_string = []
             screen.clear()
-            usage_string.append(f"Usage statistics for cgroup {cgroup.name}\n")
+            usage_string.append(f"Usage statistics for cgroup {cgroup_stats.name}\n")
             if args.cpu:
-                usage_string.append(f"Cpu usage: \n{cgroup.get_cpu_usage()}\n")
+                usage_string.append(f"Cpu usage: \n{cgroup_stats.get_cpu_usage()}\n")
             if args.memory:
-                usage_string.append(f"Memory usage: \n{cgroup.get_memory_usage()}\n")
+                usage_string.append(f"Memory usage: \n{cgroup_stats.get_memory_usage()}\n")
             if args.disk:
-                io_stats, io_pressure = cgroup.get_io_stat()
-
-                usage_string.append(f"I/O statistics for cgroup {cgroup.name}:\n")
+                io_stats = cgroup_stats.get_io_stat()
+                usage_string.append(f"I/O statistics for cgroup {cgroup_stats.name}:\n")
                 for device, stats in io_stats.items():
                     usage_string.append(f"Device: {device}\n")
                     usage_string.append(f"  Read bytes: {stats.get('rbytes', 0)}\n")
@@ -40,6 +39,7 @@ def main():
                     usage_string.append(f"  Delayed bytes: {stats.get('dbytes', 0)}\n")
                     usage_string.append(f"  Delayed I/O operations: {stats.get('dios', 0)}\n")
 
+                io_pressure = cgroup_stats.get_io_pressure()
                 if io_pressure:
                     usage_string.append("I/O pressure:\n")
                     usage_string.append(
@@ -49,11 +49,11 @@ def main():
                     usage_string.append(f"  Total full pressure time: {io_pressure['full']['total']}")
 
             if args.network:
-                usage_string.append(f"Network usage: {cgroup.get_network_usage()}")
+                usage_string.append(f"Network usage: {cgroup_stats.get_network_usage()}")
 
-                screen.addstr(''.join(usage_string))
-                screen.refresh()
-                time.sleep(1)
+            screen.addstr(''.join(usage_string))
+            screen.refresh()
+            time.sleep(1)
 
     try:
         curses.wrapper(display_data)
