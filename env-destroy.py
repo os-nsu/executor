@@ -1,19 +1,25 @@
 import argparse
 from cgroup import CGroup
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--env_name', type = str, required = True, help = 'environment name')
 
-args = parser.parse_args()
-env_name = args.env_name
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--env_name', type=str, required=True, help='environment name')
 
-cgroup = CGroup(env_name)
+    args = parser.parse_args()
+    env_name = args.env_name
 
-print(f'Removing {env_name} cgroup... ')
+    cgroup = CGroup(env_name)
 
-if not cgroup.created():
-    print(f'cgroup {env_name} was not created')
-    exit(-1)
+    print(f'Removing {env_name} cgroup... ')
 
-cgroup.remove()
-print('done')
+    if not cgroup.created():
+        print(f'cgroup {env_name} was not created')
+        exit(-1)
+
+    cgroup.remove()
+    print('done')
+
+
+if __name__ == "__main__":
+    main()
