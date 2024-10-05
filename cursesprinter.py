@@ -7,6 +7,19 @@ class CursesPrinter:
         self.stat_metrics = stat_metrics
         self.cgroup_stats = cgroup_stats
 
+    def __format_cpu_usage(self, cpu_usage):
+        usage_string = []
+        usage_string.append(f"  usage_usec: {cpu_usage.get('usage_usec', 0)}")
+        usage_string.append(f"  user_usec: {cpu_usage.get('user_usec', 0)}")
+        usage_string.append(f"  system_usec: {cpu_usage.get('system_usec', 0)}")
+        return usage_string
+
+    def __format_memory_usage(self, memory_usage):
+        usage_string = []
+        usage_string.append(f"  memory_current: {memory_usage.get('memory_current', 0)}")
+        usage_string.append(f"  memory_max: {memory_usage.get('memory_max', 0)}")
+        return usage_string
+
     def __format_io_stats(self, io_stats):
         usage_string = []
         for device, stats in io_stats.items():
@@ -35,18 +48,21 @@ class CursesPrinter:
             screen.clear()
             usage_string.append(f'Usage statistics for cgroup {self.cgroup_stats.name}\n')
             if self.stat_metrics['cpu']:
-                usage_string.append(f'Cpu usage (usage_usec, user_usec, system_usec): {self.cgroup_stats.get_cpu_usage()}\n')
+                cpu_usage = self.cgroup_stats.get_cpu_usage()
+                formated_cpu_usage = '\n'.join(self.__format_cpu_usage(cpu_usage))
+                usage_string.append(f'Cpu usage:\n{formated_cpu_usage}\n')
             if self.stat_metrics['memory']:
-                usage_string.append(f'\nMemory usage (current, max): \n{self.cgroup_stats.get_memory_usage()}\n')
+                memory_usage = self.cgroup_stats.get_memory_usage()
+                formated_memory_usage = '\n'.join(self.__format_memory_usage(memory_usage))
+                usage_string.append(f'\nMemory usage:\n{formated_memory_usage}\n')
             if self.stat_metrics['disk']:
                 usage_string.append('\nDisk usage:\n')
+
                 io_stats = self.cgroup_stats.get_io_stat()
-                # usage_string.append(f'IO stats: {io_stats}\n')
                 formated_io_stats = '\n'.join(self.__format_io_stats(io_stats))
-                usage_string.append(
-                    f'IO statistics:\n {formated_io_stats}\n')
+                usage_string.append(f'IO statistics:\n {formated_io_stats}\n')
+
                 io_pressure = self.cgroup_stats.get_io_pressure()
-                # usage_string.append(f'IO pressure: {io_pressure}\n')
                 formated_io_pressure = '\n'.join(self.__format_io_pressure(io_pressure))
                 usage_string.append(f'I/O pressure:\n{formated_io_pressure}\n')
 

@@ -5,32 +5,30 @@ class CgroupStats:
     def __init__(self, name):
         self.name = name
 
-    # выводит потребление cpu данной cgroup в виде времени использования процессора (в микросекундах)
     def get_cpu_usage(self):
         try:
             with open(f'/sys/fs/cgroup/{self.name}/cpu.stat', 'r') as f:
-                usage_usec = 0  # user_usec + system_usec
-                user_usec = 0  # число микросекунд, потраченных на пользовательские задачи
-                system_usec = 0  # число микросекунд, потраченных на системные задачи
+                cpu_usage = {}
                 for line in f:
                     if line.startswith('usage_usec'):
-                        usage_usec = int(line.split()[1])
+                        cpu_usage['usage_usec'] = int(line.split()[1])
                     if line.startswith('user_usec'):
-                        user_usec = int(line.split()[1])
+                        cpu_usage['user_usec'] = int(line.split()[1])
                     if line.startswith('system_usec'):
-                        system_usec = int(line.split()[1])
-                return usage_usec, user_usec, system_usec
+                        cpu_usage['system_usec'] = int(line.split()[1])
+                return cpu_usage
         except FileNotFoundError:
             print(f"File cpu.stat not found for cgroup {self.name}")
             return None
 
     def get_memory_usage(self):
         try:
+            memory_usage = {}
             with open(f'/sys/fs/cgroup/{self.name}/memory.current', 'r') as f:
-                memory_current = int(f.read().strip())
+                memory_usage['memory_current'] = int(f.read().strip())
             with open(f'/sys/fs/cgroup/{self.name}/memory.max', 'r') as f:
-                memory_max = int(f.read().strip())
-            return memory_current, memory_max
+                memory_usage['memory_max'] = int(f.read().strip())
+            return memory_usage
         except FileNotFoundError:
             print(f"Memory usage file not found for cgroup {self.name}")
             return None
