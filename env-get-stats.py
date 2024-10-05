@@ -1,7 +1,7 @@
 import time
 import curses
 import argparse
-from cgroup import CGroup
+from cgroupstats import CgroupStats
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
 
     args = parser.parse_args()
 
-    cgroup = CGroup(args.env_name)
+    cgroup = CgroupStats(args.env_name)
 
     def display_data(screen):
         curses.curs_set(0)
