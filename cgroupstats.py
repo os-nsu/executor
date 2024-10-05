@@ -85,32 +85,3 @@ class CgroupStats:
         except Exception as e:
             print(f"Error reading IO pressure: {e}")
             return None
-
-    def get_network_usage(self) -> dict:
-        network_usage = {}
-        try:
-            with open(f"/sys/fs/cgroup/{self.name}/cgroup.procs", 'r') as f:
-                pids = [line.strip() for line in f.readlines()]
-
-            for pid in pids:
-                try:
-                    with open(f"/proc/{pid}/net/dev", 'r') as net_file:
-                        for line in net_file.readlines()[2:]:
-                            fields = line.split()
-                            interface = fields[0].strip(':')
-                            receive_bytes = int(fields[1])
-                            transmit_bytes = int(fields[9])
-                            if interface not in network_usage:
-                                network_usage[interface] = {'rx_bytes': 0, 'tx_bytes': 0}
-                            network_usage[interface]['rx_bytes'] += receive_bytes
-                            network_usage[interface]['tx_bytes'] += transmit_bytes
-                except FileNotFoundError:
-                    print(f"Network stats for process {pid} not found")
-                except Exception as e:
-                    print(f"Error reading network usage for process {pid}: {e}")
-        except FileNotFoundError:
-            print(f"Processes file not found for cgroup {self.name}")
-        except Exception as e:
-            print(f"Error reading processes file: {e}")
-
-        return network_usage

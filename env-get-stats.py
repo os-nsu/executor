@@ -9,12 +9,11 @@ def main():
     parser.add_argument('--cpu', action='store_true', help='CPU usage')
     parser.add_argument('--memory', action='store_true', help='RAM usage')
     parser.add_argument('--disk', action='store_true', help='disk usage')
-    parser.add_argument('--network', action='store_true', help='network usage')
 
     args = parser.parse_args()
 
     cgroup_stats = CgroupStats(args.env_name)
-    stat_metrics = {key: value for key, value in vars(args).items() if key in ['cpu', 'memory', 'disk', 'network']}
+    stat_metrics = {key: value for key, value in vars(args).items() if key in ['cpu', 'memory', 'disk']}
 
     printer = CursesPrinter(cgroup_stats, stat_metrics)
     printer.show_data()
