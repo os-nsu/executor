@@ -3,8 +3,8 @@ import curses
 
 
 class CursesCgroupStatPrinter:
-    def __init__(self, cgroup_stats, stat_metrics):
-        self.requested_stats = stat_metrics
+    def __init__(self, cgroup_stats, requested_stats):
+        self.requested_stats = requested_stats
         self.cgroup_stats = cgroup_stats
 
     def __format_cpu_usage(self, cpu_usage):
