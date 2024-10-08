@@ -19,7 +19,8 @@ class CgroupStats:
                 return cpu_usage
         except FileNotFoundError:
             print(f"File cpu.stat not found for cgroup {self.name}")
-            return None
+        except Exception as e:
+            print(f"Error reading cpu usage: {e}")
 
     def get_memory_usage(self):
         try:
