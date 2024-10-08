@@ -1,7 +1,7 @@
 import json
 
 
-class JsonBuilder:
+class CgroupStatFileExporter:
     def __init__(self, cgroup_stats, stat_metrics):
         self.stat_metrics = stat_metrics
         self.cgroup_stats = cgroup_stats
