@@ -26,8 +26,8 @@ class CgroupStats:
             memory_usage = {}
             with open(f'/sys/fs/cgroup/{self.name}/memory.current', 'r') as f:
                 memory_usage['memory_current'] = int(f.read().strip())
-            with open(f'/sys/fs/cgroup/{self.name}/memory.max', 'r') as f:
-                memory_usage['memory_max'] = int(f.read().strip())
+            with open(f'/sys/fs/cgroup/{self.name}/memory.peak', 'r') as f:
+                memory_usage['memory_peak'] = int(f.read().strip())
             return memory_usage
         except FileNotFoundError:
             print(f"Memory usage file not found for cgroup {self.name}")

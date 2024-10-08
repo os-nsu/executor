@@ -17,7 +17,7 @@ class CursesCgroupStatPrinter:
     def __format_memory_usage(self, memory_usage):
         usage_string = []
         usage_string.append(f"  memory_current: {memory_usage.get('memory_current', 0)}")
-        usage_string.append(f"  memory_max: {memory_usage.get('memory_max', 0)}")
+        usage_string.append(f"  memory_peak: {memory_usage.get('memory_peak', 0)}")
         return usage_string
 
     def __format_io_stats(self, io_stats):

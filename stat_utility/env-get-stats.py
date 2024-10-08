@@ -20,6 +20,7 @@ def main():
     # Статистика выводится в файл, а затем показывается в терминальной сессии.
     json_builder = CgroupStatFileExporter(cgroup_stats, requested_stats)
     json_builder.save_to_json("stats.json")
+    print("The statistics have been saved to a file 'stats.json'")
 
     printer = CursesCgroupStatPrinter(cgroup_stats, requested_stats)
     printer.show_data()
