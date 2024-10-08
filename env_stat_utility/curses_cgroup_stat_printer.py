@@ -4,7 +4,7 @@ import curses
 
 class CursesCgroupStatPrinter:
     def __init__(self, cgroup_stats, stat_metrics):
-        self.stat_metrics = stat_metrics
+        self.requested_stats = stat_metrics
         self.cgroup_stats = cgroup_stats
 
     def __format_cpu_usage(self, cpu_usage):
@@ -47,15 +47,15 @@ class CursesCgroupStatPrinter:
             usage_string = []
             screen.clear()
             usage_string.append(f'Usage statistics for cgroup {self.cgroup_stats.name}\n')
-            if self.stat_metrics['cpu']:
+            if self.requested_stats['cpu']:
                 cpu_usage = self.cgroup_stats.get_cpu_usage()
                 formated_cpu_usage = '\n'.join(self.__format_cpu_usage(cpu_usage))
                 usage_string.append(f'Cpu usage:\n{formated_cpu_usage}\n')
-            if self.stat_metrics['memory']:
+            if self.requested_stats['memory']:
                 memory_usage = self.cgroup_stats.get_memory_usage()
                 formated_memory_usage = '\n'.join(self.__format_memory_usage(memory_usage))
                 usage_string.append(f'\nMemory usage:\n{formated_memory_usage}\n')
-            if self.stat_metrics['disk']:
+            if self.requested_stats['disk']:
                 usage_string.append('\nDisk usage:\n')
 
                 io_stats = self.cgroup_stats.get_io_stat()
