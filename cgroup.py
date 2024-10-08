@@ -2,6 +2,7 @@ import os
 
 CGROUP_MOUNT_PATH = '/sys/fs/cgroup'
 
+
 class CGroup:
     @staticmethod
     def check_controllers() -> bool:
@@ -55,7 +56,7 @@ class CGroup:
         with open(f"/sys/fs/cgroup/{self.name}/io.max", 'a+') as f:
             f.write(device_major_minor_id + f' rbps={int(speed_limit) * 1000}')
             f.write(device_major_minor_id + f' wbps={int(speed_limit) * 1000}')
-    
+
     def set_cpu_core_count_limit(self, count):
         with open(f"/sys/fs/cgroup/{self.name}/cpuset.cpus", 'a+') as f:
             f.write(str(count))
