@@ -86,3 +86,14 @@ class CgroupStats:
         except Exception as e:
             print(f"Error reading IO pressure: {e}")
             return None
+
+    def get_syscall_stats(self):
+        try:
+            with open(f'/sys/fs/cgroup/{self.name}/cgroup.procs', 'r') as f:
+                for line in f:
+                    traced_pid = line.strip()
+                    os.system(f"strace -ff -tt -o trace -p {traced_pid}")
+        except FileNotFoundError:
+            print(f"cgroup.procs file not found for cgroup {self.name}")
+        except Exception as e:
+            print(f"Error getting syscall stats: {e}")

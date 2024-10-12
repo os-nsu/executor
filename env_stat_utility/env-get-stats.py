@@ -11,16 +11,23 @@ def main():
     parser.add_argument('--cpu', action='store_true', help='CPU usage')
     parser.add_argument('--memory', action='store_true', help='RAM usage')
     parser.add_argument('--disk', action='store_true', help='disk usage')
-
+    parser.add_argument('--syscalls', action='store_true', help='syscall usage')
+    # parser.add_argument('--mode', type=str, default='json', help='mode (json | watch)')
     args = parser.parse_args()
 
     cgroup_stats = CgroupStats(args.env_name)
+
+    if args.syscalls:
+        cgroup_stats.get_syscall_stats()
+
     requested_stats = {key: value for key, value in vars(args).items() if key in ['cpu', 'memory', 'disk']}
 
     # Статистика выводится в файл, а затем показывается в терминальной сессии.
-    json_builder = CgroupStatFileExporter(cgroup_stats, requested_stats)
-    json_builder.save_to_json("stats.json")
-    print("The statistics have been saved to a file 'stats.json'")
+    if True in requested_stats.values():
+        filename = 'stats.json'
+        json_builder = CgroupStatFileExporter(cgroup_stats, requested_stats)
+        json_builder.save_to_json(filename)
+        print(f"The statistics have been saved to a file {filename}")
 
     printer = CursesCgroupStatPrinter(cgroup_stats, requested_stats)
     printer.show_data()
