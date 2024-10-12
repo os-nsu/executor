@@ -2,7 +2,7 @@ import argparse
 from cgroup_stats import CgroupStats
 from curses_cgroup_stat_printer import CursesCgroupStatPrinter
 from cgroup_stat_file_exporter import CgroupStatFileExporter
-
+import threading
 
 def main():
     parser = argparse.ArgumentParser()
@@ -17,8 +17,12 @@ def main():
 
     cgroup_stats = CgroupStats(args.env_name)
 
+    # Запуск в отдельном потоке для того, чтобы не блокировать основной поток, который собирает статистику.
     if args.syscalls:
-        cgroup_stats.get_syscall_stats()
+        thread = threading.Thread(target=cgroup_stats.get_syscall_stats)
+        thread.daemon = True
+        thread.start()
+        print("Syscall stats are starting to print to trace.pid file")
 
     requested_stats = {key: value for key, value in vars(args).items() if key in ['cpu', 'memory', 'disk']}
 
