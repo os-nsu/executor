@@ -19,7 +19,8 @@ def main():
 
     # Запуск в отдельном потоке для того, чтобы не блокировать основной поток, который собирает статистику.
     if args.syscalls:
-        thread = threading.Thread(target=cgroup_stats.get_syscall_stats)
+        # thread = threading.Thread(target=cgroup_stats.get_syscall_stats)
+        thread = threading.Thread(target=cgroup_stats.get_syscall_stats_with_perf)
         thread.daemon = True
         thread.start()
         print("Syscall stats are starting to print to trace.pid file")

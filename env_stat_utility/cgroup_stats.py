@@ -97,3 +97,14 @@ class CgroupStats:
             print(f"cgroup.procs file not found for cgroup {self.name}")
         except Exception as e:
             print(f"Error getting syscall stats: {e}")
+
+    def get_syscall_stats_with_perf(self):
+        try:
+            with open(f'/sys/fs/cgroup/{self.name}/cgroup.procs', 'r') as f:
+                for line in f:
+                    traced_pid = line.strip()
+                    os.system(f"perf trace -o trace.{traced_pid} -p {traced_pid}")
+        except FileNotFoundError:
+            print(f"cgroup.procs file not found for cgroup {self.name}")
+        except Exception as e:
+            print(f"Error getting syscall stats: {e}")
