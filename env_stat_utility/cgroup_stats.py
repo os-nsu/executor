@@ -1,4 +1,5 @@
 import os
+import threading
 
 
 class CgroupStats:
@@ -87,24 +88,32 @@ class CgroupStats:
             print(f"Error reading IO pressure: {e}")
             return None
 
-    def get_syscall_stats(self):
+    def __get_cgroup_pids(self):
         try:
             with open(f'/sys/fs/cgroup/{self.name}/cgroup.procs', 'r') as f:
+                traced_pids = []
                 for line in f:
-                    traced_pid = line.strip()
-                    os.system(f"strace -ff -tt -o trace -p {traced_pid}")
+                    traced_pids.append(line.strip())
+                return traced_pids
         except FileNotFoundError:
             print(f"cgroup.procs file not found for cgroup {self.name}")
+            return None
         except Exception as e:
-            print(f"Error getting syscall stats: {e}")
+            print(f"Error getting cgroup pids: {e}")
+            return None
 
-    def get_syscall_stats_with_perf(self):
-        try:
-            with open(f'/sys/fs/cgroup/{self.name}/cgroup.procs', 'r') as f:
-                for line in f:
-                    traced_pid = line.strip()
-                    os.system(f"perf trace -o trace.{traced_pid} -p {traced_pid}")
-        except FileNotFoundError:
-            print(f"cgroup.procs file not found for cgroup {self.name}")
-        except Exception as e:
-            print(f"Error getting syscall stats: {e}")
+    def __trace_pid(self, pid):
+        ec = os.system(f"strace -tt -C -S calls -U name,calls -o trace -p {pid}")
+        if ec != 0:
+            print(f"Failed to trace pid: {pid}")
+
+    def get_syscall_stats(self):
+        traced_pids = self.__get_cgroup_pids()
+        threads = []
+        for pid in traced_pids:
+            thread = threading.Thread(target=self.__trace_pid, args=(pid,))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
