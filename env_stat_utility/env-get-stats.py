@@ -1,10 +1,8 @@
 import argparse
-from fileinput import filename
 
 from cgroup_stats import CgroupStats
 from curses_cgroup_stat_printer import CursesCgroupStatPrinter
 from cgroup_stat_file_exporter import CgroupStatFileExporter
-import threading
 
 
 def main():

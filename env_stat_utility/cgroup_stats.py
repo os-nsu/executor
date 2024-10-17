@@ -88,32 +88,16 @@ class CgroupStats:
             print(f"Error reading IO pressure: {e}")
             return None
 
-    def __get_cgroup_pids(self):
+    def get_cgroup_pids(self):
         try:
             with open(f'/sys/fs/cgroup/{self.name}/cgroup.procs', 'r') as f:
-                traced_pids = []
+                cgroup_pids = []
                 for line in f:
-                    traced_pids.append(line.strip())
-                return traced_pids
+                    cgroup_pids.append(line.strip())
+                return cgroup_pids
         except FileNotFoundError:
             print(f"cgroup.procs file not found for cgroup {self.name}")
             return None
         except Exception as e:
             print(f"Error getting cgroup pids: {e}")
             return None
-
-    def __trace_pid(self, pid):
-        ec = os.system(f"strace -tt -C -S calls -U name,calls -o trace -p {pid}")
-        if ec != 0:
-            print(f"Failed to trace pid: {pid}")
-
-    def get_syscall_stats(self):
-        traced_pids = self.__get_cgroup_pids()
-        threads = []
-        for pid in traced_pids:
-            thread = threading.Thread(target=self.__trace_pid, args=(pid,))
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
