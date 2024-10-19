@@ -87,17 +87,3 @@ class CgroupStats:
         except Exception as e:
             print(f"Error reading IO pressure: {e}")
             return None
-
-    def get_cgroup_pids(self):
-        try:
-            with open(f'/sys/fs/cgroup/{self.name}/cgroup.procs', 'r') as f:
-                cgroup_pids = []
-                for line in f:
-                    cgroup_pids.append(line.strip())
-                return cgroup_pids
-        except FileNotFoundError:
-            print(f"cgroup.procs file not found for cgroup {self.name}")
-            return None
-        except Exception as e:
-            print(f"Error getting cgroup pids: {e}")
-            return None
