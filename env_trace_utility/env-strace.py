@@ -34,7 +34,7 @@ def main():
     # получение статистики в виде словаря
     syscall_stats_dict = syscall_stats.get_stats()
     # получение статистики в виде json-файла
-    SyscallStatFileExporter.save_to_json(syscall_stats_dict, args.output_file)
+    SyscallStatFileExporter.save_to_json(syscall_stats_dict, f"{syscall_stats.dir_name}/{args.output_file}")
 
 
 if __name__ == "__main__":
