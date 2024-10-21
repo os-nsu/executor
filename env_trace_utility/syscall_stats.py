@@ -1,45 +1,21 @@
 import os
 import threading
 
+from env_trace_utility.strace_output_stats_parser import StraceOutputStatsParser
+
 
 class SyscallStats:
     def __init__(self, tracee):
         self.tracee = tracee
-        self.dir_name = f"traces/{tracee}_trace_files"
-        self.lock = threading.Lock()
+        self.trace_output_dir_name = f"traces/{tracee}_trace_files"
 
-    def __get_syscalls_from_trace_file(self, trace_file):
-        try:
-            with open(trace_file, 'r') as f:
-                syscall_dict = {}
-                parse = False
-                for line in f:
-                    if parse:
-                        if line.startswith('-'):
-                            continue
-                        syscall_dict[line.split()[0]] = int(line.split()[1])
-                    elif line.startswith('syscall'):
-                        parse = True
-                return syscall_dict
-        except FileNotFoundError:
-            print(f"File not found: {trace_file}")
-            return None
-
-    def __trace_pid(self, pid):
-        # несколько потоков могут одновременно попытаться создать папку, поэтому лочимся
-        with self.lock:
-            if not os.path.exists(self.dir_name):
-                os.system(f"mkdir -p {self.dir_name}")
-        trace_filename = f"{self.dir_name}/trace_with_forks.{pid}"
-        ec = os.system(f"strace -f -tt -C -S calls -U name,calls -o {trace_filename} -p {pid}")
+    @staticmethod
+    def __run_strace_and_wait(pid, trace_output_file):
+        ec = os.system(f"strace -f -tt -C -S calls -U name,calls -o {trace_output_file} -p {pid}")
         if ec != 0:
             print(f"Failed to trace pid: {pid}")
             return -1
         return 0
-
-    def __get_tracing_stats(self, filename):
-        syscall_dict = self.__get_syscalls_from_trace_file(filename)
-        return syscall_dict
 
     def __get_cgroup_pids(self, cgroup_name):
         try:
@@ -56,35 +32,36 @@ class SyscallStats:
             print(f"Error getting cgroup pids: {e}")
             return None
 
-    def __summarize_cgroup_syscall_stats(self, traced_pids):
-        sum_tracing_stats = {}
-        for pid in traced_pids:
-            pid_tracing_stats = self.__get_tracing_stats(f"{self.dir_name}/trace_with_forks.{pid}")
-            for key, value in pid_tracing_stats.items():
-                sum_tracing_stats[key] = sum_tracing_stats.get(key, 0) + value
-        return sum_tracing_stats
+    def __trace_pids_and_wait_for_completion(self, traced_pids, trace_output_files):
+        if not os.path.exists(self.trace_output_dir_name):
+            os.system(f"mkdir -p {self.trace_output_dir_name}")
 
-    def __trace_cgroup(self, cgroup_name):
-        traced_pids = self.__get_cgroup_pids(cgroup_name)
-        if traced_pids is None:
-            print(f"No pids found for cgroup {cgroup_name}")
-            return None
         threads = []
-        for pid in traced_pids:
-            thread = threading.Thread(target=self.__trace_pid, args=(pid,))
+
+        for i in range(len(traced_pids)):
+            pid = traced_pids[i]
+            trace_output_file = trace_output_files[i]
+            thread = threading.Thread(target=self.__run_strace_and_wait, args=(pid, trace_output_file))
             threads.append(thread)
             thread.start()
 
         for thread in threads:
             thread.join()
 
-        return self.__summarize_cgroup_syscall_stats(traced_pids)
+        return
 
-    def get_stats(self):
-        tracing_stats = {}
-        if isinstance(self.tracee, int):
-            if self.__trace_pid(self.tracee) == 0:
-                tracing_stats = self.__get_tracing_stats(f"{self.dir_name}/trace_with_forks.{self.tracee}")
-        elif isinstance(self.tracee, str):
-            tracing_stats = self.__trace_cgroup(self.tracee)
-        return tracing_stats
+    def get_syscall_summary_stats(self):
+        if isinstance(self.tracee, str):  # cgroup is traced
+            traced_pids = self.__get_cgroup_pids(self.tracee)
+        else:  # single pid is traced
+            traced_pids = [self.tracee]
+
+        trace_output_files = [f"{self.trace_output_dir_name}/trace_with_forks.{pid}" for pid in traced_pids]
+
+        print(f"Will trace {len(traced_pids)} pids: {traced_pids}")
+
+        self.__trace_pids_and_wait_for_completion(traced_pids, trace_output_files)
+
+        syscall_summary_stats = StraceOutputStatsParser.collect_syscall_summary_stats_from_strace_files(trace_output_files)
+
+        return syscall_summary_stats

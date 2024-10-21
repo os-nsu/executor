@@ -1,8 +1,7 @@
 import argparse
+import json
 import os
 import sys
-
-from syscall_stat_file_exporter import SyscallStatFileExporter
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from syscall_stats import SyscallStats
@@ -28,13 +27,23 @@ def parse_arguments():
     return args
 
 
+def save_to_json(stats_dict, filename):
+    try:
+        with open(filename, 'w+') as f:
+            f.write(json.dumps(stats_dict, indent='\t'))
+    except FileExistsError as e:
+        print(f'File exists: {e}')
+    except PermissionError as e:
+        print(f'Permission denied: {e}')
+
+
 def main():
     args = parse_arguments()
     syscall_stats = SyscallStats(args.tracee)
     # получение статистики в виде словаря
-    syscall_stats_dict = syscall_stats.get_stats()
+    syscall_summary_stats = syscall_stats.get_syscall_summary_stats()
     # получение статистики в виде json-файла
-    SyscallStatFileExporter.save_to_json(syscall_stats_dict, f"{syscall_stats.dir_name}/{args.output_file}")
+    save_to_json(syscall_summary_stats, f"{syscall_stats.trace_output_dir_name}/{args.output_file}")
 
 
 if __name__ == "__main__":
