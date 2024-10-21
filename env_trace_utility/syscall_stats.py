@@ -13,9 +13,7 @@ class SyscallStats:
     def __run_strace_and_wait(pid, trace_output_file):
         ec = os.system(f"strace -f -tt -C -S calls -U name,calls -o {trace_output_file} -p {pid}")
         if ec != 0:
-            print(f"Failed to trace pid: {pid}")
-            return -1
-        return 0
+            raise Exception(f"Failed to trace pid: {pid}")
 
     def __get_cgroup_pids(self, cgroup_name):
         try:
