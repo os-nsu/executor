@@ -17,6 +17,8 @@ class CgroupStatFileExporter:
                 disk_usage_dict = {"io_stat": self.cgroup_stats.get_io_stat(),
                                    "io_pressure": self.cgroup_stats.get_io_pressure()}
                 stats_dict['disk_usage'] = disk_usage_dict
+            if self.requested_stats['network']:
+                stats_dict['network_usage'] = self.cgroup_stats.get_network_stat()
             with open(filename, 'w+') as f:
                 f.write(json.dumps(stats_dict, indent='\t'))
         except FileExistsError as e:

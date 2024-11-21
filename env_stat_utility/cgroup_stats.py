@@ -83,3 +83,19 @@ class CgroupStats:
         except Exception as e:
             print(f"Error reading IO pressure: {e}")
             return None
+
+    # Пока захардкодил рандомный сетевой интерфейс, который у меня есть.
+    # Когда будет готов интерфейс под процесс прокси, либо хардкодкожу имя интерфейса в путь к файлам, либо вынесу его в CgroupStats приватным полем
+    def get_network_stat(self, network_interface='wlp2s0'):
+        try:
+            network_stats = {}
+            with open(f"/sys/class/net/{network_interface}/statistics/rx_bytes") as f:
+                network_stats['bytes_received'] = int(f.read().strip())
+            with open(f"/sys/class/net/{network_interface}/statistics/tx_bytes") as f:
+                network_stats['bytes_transmitted'] = int(f.read().strip())
+            return network_stats
+        except FileNotFoundError as e:
+            print(f"Network statistic files not found for network interface {network_interface}: {e}")
+        except Exception as e:
+            print(f"Error getting network statistics from interface: {e}")
+            return None
