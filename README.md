@@ -46,4 +46,5 @@
 `env_speed_ctl.sh -a my_iface -d 4096 -u 8192`
 
 Пример снятия ограничений на сетевом интерфейсе `my_iface`:
+
 `env_speed_ctl.sh -c my_iface`
