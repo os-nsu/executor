@@ -18,8 +18,8 @@ def main():
     parser.add_argument('-o', '--output', type=str, default='stats.json', help='output file (.json)')
     args = parser.parse_args()
 
-    if not args.interface_name:
-        parser.error(f"Error: the argument '--interface_name' is required")
+    if (args.network and not args.interface_name) or (args.interface_name and not args.network):
+        parser.error(f"Error: the arguments '--network' and '--interface_name' must be specified together")
 
     cgroup_stats = CgroupStats(args.env_name, args.interface_name)
 
