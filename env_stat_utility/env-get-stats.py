@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     if not args.interface_name:
-        parser.error(f"Error: the arguments '--interface_name' must be specified together")
+        parser.error(f"Error: the argument '--interface_name' is required")
 
     cgroup_stats = CgroupStats(args.env_name, args.interface_name)
 
