@@ -12,13 +12,18 @@ def main():
     parser.add_argument('--cpu', action='store_true', help='CPU usage')
     parser.add_argument('--memory', action='store_true', help='RAM usage')
     parser.add_argument('--disk', action='store_true', help='disk usage')
+    parser.add_argument('--network', action='store_true', help='network usage (bytes transmitted and received)')
+    parser.add_argument('--interface_name', type=str, help='virtual network interface name')
     parser.add_argument('-w', '--watch', action='store_true', help='watch mode')
     parser.add_argument('-o', '--output', type=str, default='stats.json', help='output file (.json)')
     args = parser.parse_args()
 
-    cgroup_stats = CgroupStats(args.env_name)
+    if not args.interface_name:
+        parser.error(f"Error: the argument '--interface_name' is required")
 
-    requested_stats = {key: value for key, value in vars(args).items() if key in ['cpu', 'memory', 'disk']}
+    cgroup_stats = CgroupStats(args.env_name, args.interface_name)
+
+    requested_stats = {key: value for key, value in vars(args).items() if key in ['cpu', 'memory', 'disk', 'network']}
     if True in requested_stats.values():
         if args.watch:
             printer = CursesCgroupStatPrinter(cgroup_stats, requested_stats)

@@ -1,6 +1,7 @@
 class CgroupStats:
-    def __init__(self, name):
+    def __init__(self, name, network_interface_name):
         self.name = name
+        self.network_interface_name = network_interface_name
 
     def get_cpu_usage(self):
         try:
@@ -82,4 +83,18 @@ class CgroupStats:
             return None
         except Exception as e:
             print(f"Error reading IO pressure: {e}")
+            return None
+
+    def get_network_stat(self):
+        try:
+            network_stats = {}
+            with open(f"/sys/class/net/{self.network_interface_name}/statistics/rx_bytes") as f:
+                network_stats['bytes_received'] = int(f.read().strip())
+            with open(f"/sys/class/net/{self.network_interface_name}/statistics/tx_bytes") as f:
+                network_stats['bytes_transmitted'] = int(f.read().strip())
+            return network_stats
+        except FileNotFoundError as e:
+            print(f"Network statistic files not found for network interface {self.network_interface_name}: {e}")
+        except Exception as e:
+            print(f"Error getting network statistics from interface: {e}")
             return None
