@@ -49,8 +49,8 @@ function print_usage {
 }
 
 if [ $# -eq 0 ]; then
-    print_usage;
-    exit 1;
+	print_usage;
+	exit 1;
 fi
 
 while [[ "$1" != "" ]]; do
@@ -59,30 +59,28 @@ while [[ "$1" != "" ]]; do
 			shift
 			ACTION=$1
 			;;
-        --front-ip )
-            shift
-            VETH_FRONT_IP=$1
-            ;;
-        --back-ip )
-            shift
-            VETH_BACK_IP=$1
-            ;;
+		--front-ip )
+			shift
+			VETH_FRONT_IP=$1
+			;;
+		--back-ip )
+			shift
+			VETH_BACK_IP=$1
+			;;
 		--veth-name )
-            shift
-            VETH_NAME=$1
-            ;;
+			shift
+			VETH_NAME=$1
+			;;
 		--ns-name)
-            shift
-            NS_NAME=$1
-            ;;
-        * )
-            echo "invalid argument: $1"
-            exit 1
-    esac
-    shift
+			shift
+			NS_NAME=$1
+			;;
+		* )
+			echo "invalid argument: $1"
+			exit 1
+	esac
+	shift
 done
-
-
 
 if [ "$ACTION" == "create" ]; then
 	create_veth;
