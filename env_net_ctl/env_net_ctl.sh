@@ -8,11 +8,37 @@ NS_NAME="";
 VETH_NAME="";
 VETH_FRONT_IP="";
 VETH_BACK_IP="";
+BASE_ETH=""
 
 #enable ip forwarding for iptables support
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 function create_veth {
+	if [[ -z $NS_NAME ]]; then
+		echo "namespace name is required";
+		exit 1;
+	fi
+
+	if [[ -z $VETH_NAME ]]; then
+		echo "veth name is required";
+		exit 1;
+	fi
+
+	if [[ -z $BASE_ETH ]]; then
+		echo "base eth name is required";
+		exit 1;
+	fi
+
+	if [[ -z $VETH_BACK_IP ]]; then
+		echo "veth back-ip name is required";
+		exit 1;
+	fi
+
+	if [[ -z $VETH_FRONT_IP ]]; then
+		echo "veth front-ip name is required";
+		exit 1;
+	fi
+
 	$IP netns add $NS_NAME;
 
 	#attach loopback adapter
@@ -29,9 +55,9 @@ function create_veth {
 	$IP link set $VETH_NAME"a" up;
 	$IP netns exec $NS_NAME ip link set $VETH_NAME"b" up;
 
-	$IPTABLES -A FORWARD -o eth0 -i $VETH_NAME"a" -j ACCEPT -m comment --comment "$NS_NAME";
-	$IPTABLES -A FORWARD -i eth0 -o $VETH_NAME"a" -j ACCEPT -m comment --comment "$NS_NAME";
-	$IPTABLES -t nat -A POSTROUTING -s $VETH_BACK_IP/24 -o eth0 -j MASQUERADE -m comment --comment "$NS_NAME";
+	$IPTABLES -A FORWARD -o $BASE_ETH -i $VETH_NAME"a" -j ACCEPT -m comment --comment "$NS_NAME";
+	$IPTABLES -A FORWARD -i $BASE_ETH -o $VETH_NAME"a" -j ACCEPT -m comment --comment "$NS_NAME";
+	$IPTABLES -t nat -A POSTROUTING -s $VETH_BACK_IP/24 -o $BASE_ETH -j MASQUERADE -m comment --comment "$NS_NAME";
 
 	$IP netns exec $NS_NAME ip route add default via $VETH_FRONT_IP;
 
@@ -46,7 +72,7 @@ function remove_veth {
 		exit 1;
 	fi
 
-	$IP netns del $NS_NAME;
+	$IP netns del $NS_NAME 2> /dev/null;
 
 	while $IPTABLES -L --line-number | grep $NS_NAME > /dev/null; do
 		$IPTABLES -D FORWARD $($IPTABLES -L --line-number | grep $NS_NAME | head -1 | awk '{print $1}');
@@ -71,6 +97,10 @@ while [[ "$1" != "" ]]; do
 		-a )
 			shift
 			ACTION=$1
+			;;
+		--base-eth )
+			shift
+			BASE_ETH=$1
 			;;
 		--front-ip )
 			shift

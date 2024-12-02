@@ -58,10 +58,11 @@
 2. Имя виртуального Ethernet устройства (--veth-name);
 3. Имя сетевого неймспейса (--ns-name);
 4. IP адреса, назначаемые виртуальному Ethernet устройству (--front-ip и --back-ip). Семантически он представляет из себя "реальный" провод с двумя концам, поэтому IP адресов два.
+5. Имя парного Ethernet устройства, через который будет осуществляться маршрутизация трафика (--base-eth).
 
 Пример создания виртуального сетевого интерфейса:
 
-`env_net_ctl.sh -a create --veth-name veth0 --ns-name example0 --front-ip 192.168.0.1 --back-ip 192.168.0.2`
+`env_net_ctl.sh -a create --veth-name veth0 --base-eth eth0 --ns-name example0 --front-ip 192.168.0.1 --back-ip 192.168.0.2`
 
 Проверка жизнеспособности:
 
@@ -69,4 +70,4 @@
 
 Пример удаления виртуального сетевого интерфейса, созданного выше:
 
-`env_net_ctl.sh -a remove --ns-name example0`
+`env_net_ctl.sh -a remove --ns-name example0 --veth-name veth0`
