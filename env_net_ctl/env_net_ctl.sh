@@ -29,9 +29,9 @@ function create_veth {
 	$IP link set $VETH_NAME"a" up;
 	$IP netns exec $NS_NAME ip link set $VETH_NAME"b" up;
 
-	$IPTABLES -A FORWARD -o eth0 -i $VETH_NAME"a" -j ACCEPT;
-	$IPTABLES -A FORWARD -i eth0 -o $VETH_NAME"a" -j ACCEPT;
-	$IPTABLES -t nat -A POSTROUTING -s $VETH_BACK_IP/24 -o eth0 -j MASQUERADE;
+	$IPTABLES -A FORWARD -o eth0 -i $VETH_NAME"a" -j ACCEPT -m comment --comment "$NS_NAME";
+	$IPTABLES -A FORWARD -i eth0 -o $VETH_NAME"a" -j ACCEPT -m comment --comment "$NS_NAME";
+	$IPTABLES -t nat -A POSTROUTING -s $VETH_BACK_IP/24 -o eth0 -j MASQUERADE -m comment --comment "$NS_NAME";
 
 	$IP netns exec $NS_NAME ip route add default via $VETH_FRONT_IP;
 
@@ -41,7 +41,20 @@ function create_veth {
 }
 
 function remove_veth {
+	if [[ -z $NS_NAME ]]; then
+		echo "namespace name is required";
+		exit 1;
+	fi
+
 	$IP netns del $NS_NAME;
+
+	while $IPTABLES -L --line-number | grep $NS_NAME > /dev/null; do
+		$IPTABLES -D FORWARD $($IPTABLES -L --line-number | grep $NS_NAME | head -1 | awk '{print $1}');
+	done
+
+	while $IPTABLES -t nat -L --line-number | grep $NS_NAME > /dev/null; do
+		$IPTABLES -t nat -D POSTROUTING $($IPTABLES -t nat -L --line-number | grep $NS_NAME | head -1 | awk '{print $1}');
+	done
 }
 
 function print_usage {
