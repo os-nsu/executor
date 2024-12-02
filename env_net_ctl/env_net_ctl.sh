@@ -45,7 +45,7 @@ function remove_veth {
 }
 
 function print_usage {
-	echo "$0 [-a <action>] [--veth-name] [-ns-name <namespace name>] [--front-ip <veth-front ip>] [--back-ip <veth-back ip>]";
+	echo "$0 [-a <action>] [--veth-name] [--ns-name <namespace name>] [--front-ip <veth-front ip>] [--back-ip <veth-back ip>]";
 }
 
 if [ $# -eq 0 ]; then
