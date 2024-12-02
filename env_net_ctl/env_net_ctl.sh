@@ -24,7 +24,7 @@ function create_veth {
 	$IP link set $VETH_NAME"b" netns $NS_NAME;
 
 	$IP addr add $VETH_FRONT_IP/24 dev $VETH_NAME"a";
-	$IP netns exec netns0 ip addr add $VETH_BACK_IP/24 dev $VETH_NAME"b";
+	$IP netns exec $NS_NAME ip addr add $VETH_BACK_IP/24 dev $VETH_NAME"b";
 
 	$IP link set $VETH_NAME"a" up;
 	$IP netns exec $NS_NAME ip link set $VETH_NAME"b" up;
@@ -33,7 +33,7 @@ function create_veth {
 	$IPTABLES -A FORWARD -i eth0 -o $VETH_NAME"a" -j ACCEPT;
 	$IPTABLES -t nat -A POSTROUTING -s $VETH_BACK_IP/24 -o eth0 -j MASQUERADE;
 
-	$IP netns exec netns0 ip route add default via $VETH_FRONT_IP;
+	$IP netns exec $NS_NAME ip route add default via $VETH_FRONT_IP;
 
 	#add public DNS resolver
 	mkdir -p /etc/netns/$NS_NAME;
